@@ -20,12 +20,18 @@ function App() {
       balence: 0,
     },
   ];
+  const [friendList, setFriendList] = useState(listOFfriends);
+  
+  function handleAddFriend(newFriend) {
+    if (!newFriend) return;
+    setFriendList((friends) => [...friends, newFriend]);
+  }
   return (
     <div className="h-screen w-screen p-5 flex items-center justify-center ">
       <div className=" grid grid-cols-2 gap-2 align-middle">
-        <Friends friendList={listOFfriends} />
+        <Friends friendList={friendList} />
         <FormSplitBill />
-        <AddFriendForm />
+        <AddFriendForm onFriendAdd={handleAddFriend} />
       </div>
     </div>
   );
@@ -59,39 +65,70 @@ function Friend({ friend }) {
     </li>
   );
 }
-function AddFriendForm() {
+function AddFriendForm({ onFriendAdd }) {
+  const [name, setName] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const photoURL = "https://i.pravatar.cc/48?u=";
+  function handleFormOnSubmit(e) {
+    e.preventDefault();
+    if (!name) return;
+    const id = crypto.randomUUID();
+    const newFriend = {
+      name: name,
+      id: id,
+      image: photoURL + id,
+      balence: 0,
+    };
+    setName("");
+    onFriendAdd(newFriend);
+  }
+
   return (
     <div className="form ">
-      <form className="flex flex-col w-64 space-y-4">
-        <label
-          className="block text-gray-700 text-xs font-bold "
-          htmlFor="username"
+      {isFormOpen ? (
+        <form
+          className="flex flex-col w-64 space-y-4"
+          onSubmit={handleFormOnSubmit}
         >
-          Name Of Friend
-        </label>
-        <input
-          id="username"
-          type="text"
-          placeholder="friend name"
-          className="p-2 text-xs border-2 "
-        />
-        <label
-          className="block text-gray-700 text-xs font-bold "
-          htmlFor="photo"
-        >
-          Photo
-        </label>
-        <input
-          id="photo"
-          type="text"
-          placeholder="friend image"
-          className="p-2 text-sm border-2 rounded"
-        />
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Add
-        </button>
-      </form>
-      <button className="mt-3 flex m-auto bg-gray-300 hover:bg-blue-300 hover:text-white text-gray-700 font-bold py-2 px-4 rounded">
+          <label
+            className="block text-gray-700 text-xs font-bold "
+            htmlFor="username"
+          >
+            Name Of Friend
+          </label>
+          <input
+            id="username"
+            type="text"
+            placeholder="friend name"
+            className="p-2 text-sm border-2 "
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <label
+            className="block text-gray-700 text-xs font-bold "
+            htmlFor="photo"
+          >
+            Photo
+          </label>
+          <input
+            id="photo"
+            type="text"
+            placeholder="friend image"
+            className="p-2 text-sm border-2 rounded read-only:cursor-not-allowed"
+            value={photoURL}
+            readOnly
+          />
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Add
+          </button>
+        </form>
+      ) : (
+        ""
+      )}
+      <button
+        onClick={() => setIsFormOpen(!isFormOpen)}
+        className="mt-3 flex m-auto bg-gray-300 hover:bg-blue-300 hover:text-white text-gray-700 font-bold py-2 px-4 rounded"
+      >
         open
       </button>
     </div>
@@ -102,8 +139,10 @@ function FormSplitBill() {
   // const [selectedFriend, setSelectedFriend] = useState(null);
   const [totalBill, setTotalBill] = useState(0);
   const [yourExpense, setYourExpense] = useState(0);
+  let friendsExpense = totalBill - yourExpense;
+  const [whoPaying, setWhoPaying] = useState("you");
   return (
-    <div className="form bg-orange-300 rounded p-3 w-96 flex items-center justify-center flex-col">
+    <div className="form border-2 rounded p-3 w-96 flex items-center justify-center flex-col">
       <h1 className="font-bold text-xl">Split Bill with X</h1>
       <form className="form mt-4 space-y-5">
         <div className="grid grid-cols-2 gap-2 ">
@@ -123,7 +162,7 @@ function FormSplitBill() {
         </div>
         <div className="grid grid-cols-2 gap-2  ">
           <label
-            className="block text-gray-800  text-sm font-bold "
+            className="block text-gray-800 text-sm font-bold "
             htmlFor="yourExpense"
           >
             Your expenses
@@ -131,14 +170,14 @@ function FormSplitBill() {
           <input
             type="text"
             id="yourExpense"
-            className="p-1 text-sm border-2 rounded"
+            className="p-1 text-sm border-2 rounded "
             value={yourExpense}
             onChange={(e) => setYourExpense(+e.target.value)}
           />
         </div>
         <div className="grid grid-cols-2 gap-2  ">
           <label
-            className="block text-gray-800  text-sm font-bold "
+            className="block text-gray-800  text-sm font-bold  "
             htmlFor="friendsExpense"
           >
             X's expenses
@@ -146,8 +185,9 @@ function FormSplitBill() {
           <input
             type="text"
             id="friendsExpense"
-            className="p-1 text-sm border-2 rounded"
-            disabled
+            className="p-1 text-sm border-1 rounded bg-gray-300"
+            value={friendsExpense}
+            readOnly
           />
         </div>
         <div className="grid grid-cols-2 gap-2  ">
@@ -157,12 +197,19 @@ function FormSplitBill() {
           >
             Who is paying
           </label>
-          <select id="whoPaying">
+          <select
+            id="whoPaying"
+            value={whoPaying}
+            onChange={(e) => setWhoPaying(e.target.value)}
+          >
             <option value="you">you</option>
             <option value="friend">friend</option>
           </select>
         </div>
-        <button className="w-full bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded">
+        <button
+          type="submit"
+          className="w-full bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded"
+        >
           Split Bill
         </button>
       </form>
