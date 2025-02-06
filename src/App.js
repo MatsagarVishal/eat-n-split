@@ -20,17 +20,22 @@ function App() {
       balence: 0,
     },
   ];
+
   const [friendList, setFriendList] = useState(listOFfriends);
-  
+  const [selectedFriend, setSelectedFriend] = useState(null);
   function handleAddFriend(newFriend) {
     if (!newFriend) return;
     setFriendList((friends) => [...friends, newFriend]);
   }
+
+  function handleSelectFriend(friend) {
+    setSelectedFriend((current) => (current?.id === friend.id ? null : friend));
+  }
   return (
     <div className="h-screen w-screen p-5 flex items-center justify-center ">
       <div className=" grid grid-cols-2 gap-2 align-middle">
-        <Friends friendList={friendList} />
-        <FormSplitBill />
+        <Friends friendList={friendList} onSelectFriend={handleSelectFriend} />
+        <FormSplitBill selectedFriend={selectedFriend} />
         <AddFriendForm onFriendAdd={handleAddFriend} />
       </div>
     </div>
@@ -39,30 +44,136 @@ function App() {
 
 export default App;
 
-function Friends({ friendList }) {
+function Friends({ friendList, onSelectFriend }) {
   return (
     <div className="w-64 min-h-64 flex flex-col items-center justify-center">
       <ul className="w-full flex items-center justify-between flex-col">
         {friendList.map((friend) => (
-          <Friend friend={friend} key={friend.id} />
+          <Friend
+            friend={friend}
+            onSelectFriend={onSelectFriend}
+            key={friend.id}
+          />
         ))}
       </ul>
     </div>
   );
 }
-function Friend({ friend }) {
+function Friend({ friend, onSelectFriend }) {
   return (
     <li className="w-full flex items-center justify-between flex-row mb-3 p-2 rounded-sm hover:bg-slate-300 ">
       <img src={friend.image} alt="pic" className="w-11 rounded-full" />
 
       <span>
         <h2>{friend.name}</h2>
-        {<p className="text-xs text-gray-500"></p>}
+        {<p className="text-xs text-gray-500">{friend.balence}</p>}
       </span>
-      <button className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-4 border border-blue-500 hover:border-transparent rounded">
+      <button
+        onClick={() => onSelectFriend(friend)}
+        className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-1 px-4 border border-blue-500 hover:border-transparent rounded"
+      >
         select
       </button>
     </li>
+  );
+}
+function FormSplitBill({ selectedFriend }) {
+  const [totalBill, setTotalBill] = useState(0);
+  const [yourExpense, setYourExpense] = useState(0);
+  let friendsExpense = totalBill - yourExpense;
+  const [whoPaying, setWhoPaying] = useState("you");
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (whoPaying === "you") {
+      selectedFriend.balence += yourExpense;
+    } else {
+      selectedFriend.balence -= yourExpense;
+    }
+    setYourExpense(0);
+    setTotalBill(0);
+    setWhoPaying("you");
+  }
+  return (
+    <>
+      {selectedFriend != null ? (
+        <div className="form border-2 rounded p-3 w-96 flex items-center justify-center flex-col">
+          <h1 className="font-bold text-xl">
+            Split Bill with {selectedFriend?.name}
+          </h1>
+          <form className="form mt-4 space-y-5" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-2 ">
+              <label
+                className="block text-gray-800  text-sm font-bold "
+                htmlFor="titalSplit"
+              >
+                Total Bill
+              </label>
+              <input
+                type="text"
+                id="tatalSplit"
+                className="p-1 text-sm border-2 rounded"
+                value={totalBill}
+                onChange={(e) => setTotalBill(+e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2  ">
+              <label
+                className="block text-gray-800 text-sm font-bold "
+                htmlFor="yourExpense"
+              >
+                Your expenses
+              </label>
+              <input
+                type="text"
+                id="yourExpense"
+                className="p-1 text-sm border-2 rounded "
+                value={yourExpense}
+                onChange={(e) => setYourExpense(+e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2  ">
+              <label
+                className="block text-gray-800  text-sm font-bold  "
+                htmlFor="friendsExpense"
+              >
+                {selectedFriend?.name}'s expenses
+              </label>
+              <input
+                type="text"
+                id="friendsExpense"
+                className="p-1 text-sm border-1 rounded bg-gray-300"
+                value={friendsExpense}
+                readOnly
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2  ">
+              <label
+                className="block text-gray-800  text-sm font-bold"
+                htmlFor="whoPaying"
+              >
+                Who is paying
+              </label>
+              <select
+                id="whoPaying"
+                value={whoPaying}
+                onChange={(e) => setWhoPaying(e.target.value)}
+              >
+                <option value="you">you</option>
+                <option value="friend">{selectedFriend?.name}</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded"
+            >
+              Split Bill
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div></div>
+      )}
+    </>
   );
 }
 function AddFriendForm({ onFriendAdd }) {
@@ -129,90 +240,8 @@ function AddFriendForm({ onFriendAdd }) {
         onClick={() => setIsFormOpen(!isFormOpen)}
         className="mt-3 flex m-auto bg-gray-300 hover:bg-blue-300 hover:text-white text-gray-700 font-bold py-2 px-4 rounded"
       >
-        open
+        {isFormOpen ? "Close" : "Add Friend"}
       </button>
-    </div>
-  );
-}
-
-function FormSplitBill() {
-  // const [selectedFriend, setSelectedFriend] = useState(null);
-  const [totalBill, setTotalBill] = useState(0);
-  const [yourExpense, setYourExpense] = useState(0);
-  let friendsExpense = totalBill - yourExpense;
-  const [whoPaying, setWhoPaying] = useState("you");
-  return (
-    <div className="form border-2 rounded p-3 w-96 flex items-center justify-center flex-col">
-      <h1 className="font-bold text-xl">Split Bill with X</h1>
-      <form className="form mt-4 space-y-5">
-        <div className="grid grid-cols-2 gap-2 ">
-          <label
-            className="block text-gray-800  text-sm font-bold "
-            htmlFor="titalSplit"
-          >
-            Total Bill
-          </label>
-          <input
-            type="text"
-            id="tatalSplit"
-            className="p-1 text-sm border-2 rounded"
-            value={totalBill}
-            onChange={(e) => setTotalBill(+e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-2  ">
-          <label
-            className="block text-gray-800 text-sm font-bold "
-            htmlFor="yourExpense"
-          >
-            Your expenses
-          </label>
-          <input
-            type="text"
-            id="yourExpense"
-            className="p-1 text-sm border-2 rounded "
-            value={yourExpense}
-            onChange={(e) => setYourExpense(+e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-2  ">
-          <label
-            className="block text-gray-800  text-sm font-bold  "
-            htmlFor="friendsExpense"
-          >
-            X's expenses
-          </label>
-          <input
-            type="text"
-            id="friendsExpense"
-            className="p-1 text-sm border-1 rounded bg-gray-300"
-            value={friendsExpense}
-            readOnly
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-2  ">
-          <label
-            className="block text-gray-800  text-sm font-bold "
-            htmlFor="whoPaying"
-          >
-            Who is paying
-          </label>
-          <select
-            id="whoPaying"
-            value={whoPaying}
-            onChange={(e) => setWhoPaying(e.target.value)}
-          >
-            <option value="you">you</option>
-            <option value="friend">friend</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded"
-        >
-          Split Bill
-        </button>
-      </form>
     </div>
   );
 }
