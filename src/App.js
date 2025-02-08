@@ -46,7 +46,7 @@ export default App;
 
 function Friends({ friendList, onSelectFriend }) {
   return (
-    <div className="w-64 min-h-64 flex flex-col items-center justify-center">
+    <div className="w-72 min-h-64 flex flex-col items-center justify-center">
       <ul className="w-full flex items-center justify-between flex-col">
         {friendList.map((friend) => (
           <Friend
@@ -66,7 +66,15 @@ function Friend({ friend, onSelectFriend }) {
 
       <span>
         <h2>{friend.name}</h2>
-        {<p className="text-xs text-gray-500">{friend.balence}</p>}
+        {
+          <p className="text-xs text-cyan-500">
+            {friend.balence === 0
+              ? `You and ${friend.name} are even`
+              : friend.balence < 0
+              ? `you owe ${friend.name} ${Math.abs(friend.balence)}`
+              : `${friend.name} owes you ${friend.balence}`}
+          </p>
+        }
       </span>
       <button
         onClick={() => onSelectFriend(friend)}
@@ -113,7 +121,7 @@ function FormSplitBill({ selectedFriend }) {
                 id="tatalSplit"
                 className="p-1 text-sm border-2 rounded"
                 value={totalBill}
-                onChange={(e) => setTotalBill(+e.target.value)}
+                onChange={(e) => setTotalBill(() => +e.target.value)}
               />
             </div>
             <div className="grid grid-cols-2 gap-2  ">
@@ -128,7 +136,11 @@ function FormSplitBill({ selectedFriend }) {
                 id="yourExpense"
                 className="p-1 text-sm border-2 rounded "
                 value={yourExpense}
-                onChange={(e) => setYourExpense(+e.target.value)}
+                onChange={(e) =>
+                  setYourExpense((prev) =>
+                    +e.target.value <= totalBill ? +e.target.value : prev
+                  )
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-2  ">
@@ -156,7 +168,7 @@ function FormSplitBill({ selectedFriend }) {
               <select
                 id="whoPaying"
                 value={whoPaying}
-                onChange={(e) => setWhoPaying(e.target.value)}
+                onChange={(e) => setWhoPaying(() => +e.target.value)}
               >
                 <option value="you">you</option>
                 <option value="friend">{selectedFriend?.name}</option>
